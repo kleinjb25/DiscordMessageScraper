@@ -6,8 +6,7 @@ It will then upload all of the messages to a text file to allow for easy attenda
 import json
 import os
 import requests
-from datetime import datetime
-from datetime import date
+from datetime import datetime, date, timedelta
 # Used to load the environment variables in .env
 from dotenv import load_dotenv
 load_dotenv()
@@ -22,7 +21,15 @@ def getMessages() :
 	# In this case, 1203908563374706780 is the current channelID.
 	req = requests.get(f'https://discord.com/api/v9/channels/1203908563374706780/messages', headers=headers)
 	jsonData = json.loads(req.text)
+	prevTimeStamp = datetime.now()
 	with open(file, 'a') as file:
 		for message in jsonData:
-			file.write(message['content'] + "@miamioh.edu\n")
+			currentTimeStamp = datetime.fromisoformat(message.get('timestamp', '')[:-6]) # remove the last 6 characters (timezone info)
+			currentTimeStamp = currentTimeStamp.replace(tzinfo=None) # ignore timezone
+			# This checks only for messages within the last 6 hours (21600 seconds) of running the script.
+			# If you try to run the script more than 2 hours after the meeting,
+			# it might skip messages sent near the beginning of the meeting.
+			if prevTimeStamp - currentTimeStamp < timedelta(seconds=21600):
+				file.write(message['content'] + "@miamioh.edu\n")
+			prevTimeStamp = currentTimeStamp
 getMessages()
