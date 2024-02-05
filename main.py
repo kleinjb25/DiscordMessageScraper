@@ -7,12 +7,14 @@ import json
 import os
 import requests
 from datetime import datetime
+from datetime import date
 # Used to load the environment variables in .env
 from dotenv import load_dotenv
 load_dotenv()
-now = datetime.now()
 discord_token = os.getenv('DISCORD_TOKEN')
+
 def getMessages() :
+	file = f"{date.today()}.txt"
 	headers = {'authorization': discord_token}
 	# If someone deletes the attendance channel accidentally,
 	# just make sure you have developer tools enabled in the Discord Settings,
@@ -20,6 +22,7 @@ def getMessages() :
 	# In this case, 1203908563374706780 is the current channelID.
 	req = requests.get(f'https://discord.com/api/v9/channels/1203908563374706780/messages', headers=headers)
 	jsonData = json.loads(req.text)
-	for message in jsonData:
-		print(message, '\n')
+	with open(file, 'a') as file:
+		for message in jsonData:
+			file.write(message['content'] + "@miamioh.edu\n")
 getMessages()
